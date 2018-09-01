@@ -27,8 +27,29 @@ start_link() ->
 %%====================================================================
 
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
-init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+init(_) ->
+    SupFlags = #{strategy => one_for_one,
+                 intensity => 1,
+                 period => 1},
+
+    KiksAmqpSup = #{
+      id => kiks_amqp_sup,
+      start => {kiks_amqp_sup, start_link, []},
+      shutdown => brutal_kill,
+      type => supervisor
+     },
+
+    EaglebitServer = #{
+      id => eaglebit_server,
+      start => {eaglebit_server, start_link, []},
+      shutdown => brutal_kill,
+      type => worker
+     },
+
+    ChildSpecs = [KiksAmqpSup,
+		  EaglebitServer],
+
+    {ok, {SupFlags, ChildSpecs}}.
 
 %%====================================================================
 %% Internal functions
